@@ -10,15 +10,90 @@
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
 
-     <form>
-      <label for="title">Title:</label><br>
-      <input type="text" id="title" name="title"><br>
-      <label for="subtitle">Subtitle:</label><br>
-      <input type="text" id="stitle" name="stitle">
-      <label for="author">Author:</label><br>
-      <input type="text" id="author" name="author"><br>
-      <label for="subtitle">Content:</label><br>
-      <input type="text" id="content" name="content">
+<body>
+  <h1>Lista artykułów</h1>
+  <div id="articles"></div>
+
+  <h2>Dodaj nowy artykuł</h2>
+  <form id="article-form">
+    <input name="title" placeholder="Tytuł" required><br>
+    <input name="subtitle" placeholder="Podtytuł" required><br>
+    <input name="author" placeholder="Autor" required><br>
+    <textarea name="content" placeholder="Treść" required></textarea><br>
+    <button type="submit">Dodaj artykuł</button>
+  </form>
+
+ <script>
+    const API_URL = 'https://nwiszrnyyocnkvzgyrsl.supabase.co/rest/v1/article';
+    const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53aXN6cm55eW9jbmt2emd5cnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NjYxMzgsImV4cCI6MjA2MzI0MjEzOH0.NTOjUmAAoT__LQPBmc2LbzloCF9auDNldQPPpYQg3Ys';
+
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch(API_URL + '?select=*', {
+          headers: {
+            apikey: API_KEY,
+            Authorization: 'Bearer ' + API_KEY
+          }
+        });
+
+        if (!response.ok) throw new Error('Błąd pobierania danych');
+
+        const data = await response.json();
+        const container = document.getElementById('articles');
+        container.innerHTML = '';
+
+        data.forEach(article => {
+          container.innerHTML += `
+            <article>
+              <h3>${article.title}</h3>
+              <h4>${article.subtitle}</h4>
+              <p><strong>${article.author}</strong> | ${new Date(article.created_at).toLocaleString()}</p>
+              <p>${article.content}</p>
+            </article>
+          `;
+        });
+      } catch (error) {
+        console.error('Fetch error:', error);
+      }
+    };
+
+    const createArticle = async (article) => {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            apikey: API_KEY,
+            Authorization: 'Bearer ' + API_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(article)
+        });
+
+        if (response.status !== 201) {
+          throw new Error(`Błąd: ${response.status}`);
+        }
+
+        fetchArticles();
+      } catch (error) {
+        console.error('Fetch error:', error);
+      }
+    };
+
+    document.getElementById('article-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const newArticle = {
+        title: form.title.value,
+        subtitle: form.subtitle.value,
+        author: form.author.value,
+        content: form.content.value,
+      };
+      await createArticle(newArticle);
+      form.reset();
+    });
+
+    fetchArticles();
+  </script>
 
 </form> 
   </body>
